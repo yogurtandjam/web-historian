@@ -1,7 +1,7 @@
 var fs = require('fs');
 var path = require('path');
 var _ = require('underscore');
-
+var fetcher = require('../workers/htmlfetcher');
 /*
  * You will need to reuse the same paths many times over in the course of this sprint.
  * Consider using the `paths` object below to store frequently used file paths. This way,
@@ -26,12 +26,11 @@ exports.initialize = function(pathsObj) {
 // modularize your code. Keep it clean!
 
 exports.readListOfUrls = function(callback) {
-  fs.readFile(this.paths.list, 'utf8', (err, data) => {
+  fs.readFile(exports.paths.list, 'utf8', (err, data) => {
     if (err) {
       throw err;
     } else {
       if (data) {
-        console.log('data is', data);
         var result = data.split('\n');
         callback(result);
       }
@@ -40,26 +39,30 @@ exports.readListOfUrls = function(callback) {
 };
 
 exports.isUrlInList = function(url, callback) {
-  this.readListOfUrls(function(urls) {
+  exports.readListOfUrls(function(urls) {
     callback(urls.includes(url));
   });
 };
 
 
 exports.addUrlToList = function(url, callback) {
-  this.readListOfUrls(function(urls) {
-    console.log(urls);
-    urls[urls.length - 1] = url.toString();
-    urls.push('\n');
-    console.log('after push ', urls);
-    callback(urls);
-  });
-
+  fs.appendFile(exports.paths.list, url, (err)=>{
+    if (err) throw err;
+    callback();
+  })
 };
 
 exports.isUrlArchived = function(url, callback) {
-  
+  fs.readdir(exports.paths.archivedSites, 'utf8', (err, data) => {
+    if (err) throw err;
+    else {
+      callback(data.includes(url));
+    }
+  }) 
 };
 
-exports.downloadUrls = function(urls) {
+exports.downloadUrls = function(urls, content) {
+  urls.forEach(function(url) {
+    fs.writeFileSync(exports.paths.archivedSites + '/'+ url, content);
+  })
 };

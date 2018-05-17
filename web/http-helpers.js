@@ -11,12 +11,6 @@ exports.headers = {
 };
 
 exports.serveAssets = function(res, asset, callback) {
-  // Write some code here that helps serve up your static files!
-  // (Static files are things like html (yours or archived from others...),
-  // css, or anything that doesn't change often.)
-  
-//this is a helper function 
-//the input decision is made before we run this
   callback(asset, 'utf8', (err, data) => {
     var response = 200;
     if (err) {
@@ -34,8 +28,11 @@ exports.serveAssets = function(res, asset, callback) {
       }
     }
   });
-  
 };
+
+
+
+
 
 
 
