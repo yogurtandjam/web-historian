@@ -28,41 +28,61 @@ exports.initialize = function(pathsObj) {
 exports.readListOfUrls = function(callback) {
   fs.readFile(exports.paths.list, 'utf8', (err, data) => {
     if (err) {
-      throw err;
+      callback(null, err);
     } else {
       if (data) {
         var result = data.split('\n');
         callback(result);
+      } else {
+        console.log(err, '------------');
+        callback([], null);
       }
     }
   });
 };
 
 exports.isUrlInList = function(url, callback) {
-  exports.readListOfUrls(function(urls) {
-    callback(urls.includes(url));
+  exports.readListOfUrls(function(urls, err) {
+    if (err) {
+      callback(null, err);
+    } else {
+      callback(urls.includes(url), null);
+    }
   });
 };
 
 
 exports.addUrlToList = function(url, callback) {
-  fs.appendFile(exports.paths.list, url, (err)=>{
-    if (err) throw err;
+  fs.appendFile(exports.paths.list, `${url}\n`, (err)=>{
+    if (err) { throw err; }
     callback();
-  })
+  });
 };
 
 exports.isUrlArchived = function(url, callback) {
   fs.readdir(exports.paths.archivedSites, 'utf8', (err, data) => {
-    if (err) throw err;
-    else {
-      callback(data.includes(url));
+    if (err) { throw err; } else {
+      console.log('isUrlArchived is reading for this, yo ', url.slice(8));
+      callback(data.includes(url.slice(8)));
     }
-  }) 
+  }); 
 };
 
 exports.downloadUrls = function(urls, content) {
-  urls.forEach(function(url) {
-    fs.writeFileSync(exports.paths.archivedSites + '/'+ url, content);
-  })
+  // console.log('------------------- this is urls',urls)
+  if (typeof urls === 'object') {
+    urls.forEach(function(url) {
+      fs.writeFileSync(exports.paths.archivedSites + '/' + url.slice(8), content);
+    });
+  } else {
+    // console.log(exports.paths.archivedSites + '/'+ urls)
+    fs.writeFileSync(exports.paths.archivedSites + '/' + urls.slice(8), content);
+  }
+  // urls.forEach(function(url) {
+  //   exports.isUrlArchived(url, function(isFound) {
+  //     if (!isFound) {
+  //       fetcher.fetch(url)
+  //     }
+  //   })
+  // })
 };

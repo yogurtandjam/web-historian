@@ -19,9 +19,6 @@ exports.serveAssets = function(res, asset, callback) {
       if (asset.match('css')) {
         this.headers['Content-Type'] = 'text/css';
       }
-      // if (asset.match('html')) {
-      //   response = 2000;
-      // }
       res.writeHead(response, this.headers);
       if (data) {
         res.end(data);

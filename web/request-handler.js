@@ -2,7 +2,7 @@ var path = require('path');
 var archive = require('../helpers/archive-helpers');
 var httpHelpers = require('../web/http-helpers');
 var fs = require('fs');
-var http = require('http');
+var http = require('https');
 // require more modules/folders here!
 
 exports.handleRequest = function (req, res) {
@@ -14,15 +14,14 @@ exports.handleRequest = function (req, res) {
     }
     if (req.url.match('styles.css')) {
       httpHelpers.serveAssets(res, archive.paths.siteAssets + '/styles.css', fs.readFile);
-    }
-    else {
+    } else {
       // let url = req.url.slice(4);
-      console.log(req.url)
+      console.log(req.url);
       archive.isUrlArchived(req.url, function(exists) {
         if (exists) {
           httpHelpers.serveAssets(res, url, fs.readFile);
         }
-      })
+      });
     }
   }
 
@@ -30,42 +29,45 @@ exports.handleRequest = function (req, res) {
     let body = '';
     let statusCode = 201;
     httpHelpers.headers['Content-type'] = 'plain/text';
-    res.writeHead(statusCode, httpHelpers.headers)
+    res.writeHead(statusCode, httpHelpers.headers);
     req.on('data', (chunk) => {
       body += chunk;
-    })
+    });
     req.on('end', ()=> {
-      let url = body.slice(4);
-      console.log(url)
-      archive.isUrlArchived(url, function(exists){
+      let url = 'https://' + body.slice(4);
+      console.log(url);
+      archive.isUrlArchived(url, function(exists) {
         if (exists) {
-          httpHelpers.serveAssets(res, url, fs.readFile);
+          console.log('------------------------');
+          httpHelpers.serveAssets(res, archive.paths.archivedSites + '/' + url.slice(7), fs.readFile);
         } else {
           archive.isUrlInList(url, function(exists, err) {
             if (exists) {
-              console.log('url is in the list', url)
-              http.get('http://www.youtube.com/', (res) => {
-                // if(res.statusCode !== 200){console.log('error')}
+              http.get(url, (res) => {
                 res.setEncoding('utf8');
                 let rawData = '';
-                res.on('data', (chunk) => {rawData += chunk})
-                console.log(rawData)
-                if(rawData) {
-                    archive.downloadUrls(url, rawData);
-                  }
-              })
+                res.on('data', (chunk) => {
+                  rawData += chunk;
+                });
+                res.on('error', (err) => {
+                  console.log('err', err);
+                });
+                res.on('end', (data) => {
+                  // console.log('complete', url);
+                  archive.downloadUrls(url, rawData);
+                });
+              });
             } else {
               archive.addUrlToList(url, function() {
                 archive.isUrlInList(url, function(exists) {
-                  if (exists) {console.log('url is now in list')}
-                  else {console.log('something went wrong!')}
-                })
-              })
+                  if (exists) { console.log('url is now in list'); } else { console.log('something went wrong!'); }
+                });
+              });
             }
-          })
+          });
         }
-      })
-    })
+      });
+    });
   }
 
 
